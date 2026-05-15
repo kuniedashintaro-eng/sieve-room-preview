@@ -23,8 +23,8 @@ async function normalizeImageForOpenAI(buffer: Buffer) {
     .rotate()
     .flatten({ background: "#ffffff" })
     .resize({
-      width: 1536,
-      height: 1536,
+      width: 1280,
+      height: 1280,
       fit: "inside",
       withoutEnlargement: true,
     })

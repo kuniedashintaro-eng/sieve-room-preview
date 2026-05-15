@@ -39,7 +39,40 @@ function getFriendlyErrorMessage(caughtError: unknown) {
     return "通信に失敗しました。ネットワーク環境を確認し、ページを再読み込みしてからもう一度お試しください。";
   }
 
+  if (message.includes("JSON Parse error") || message.includes("Unexpected identifier")) {
+    return "サーバーから一時的に予期しない応答が返りました。画像生成が混み合っているか、処理時間が長くなっています。少し待ってからもう一度お試しください。";
+  }
+
   return message;
+}
+
+function parseGenerateResponse(responseText: string) {
+  if (!responseText) {
+    return {};
+  }
+
+  try {
+    return JSON.parse(responseText) as { image?: string; error?: string };
+  } catch {
+    if (responseText.includes("Request Entity Too Large")) {
+      return {
+        error:
+          "アップロード画像が大きすぎます。画像を少し小さくしてからもう一度お試しください。",
+      };
+    }
+
+    if (responseText.includes("FUNCTION_INVOCATION_TIMEOUT")) {
+      return {
+        error:
+          "画像生成の処理時間が長くなりタイムアウトしました。別の画像または短めの配置指示で再度お試しください。",
+      };
+    }
+
+    return {
+      error:
+        "サーバーから予期しない応答が返りました。少し待ってからもう一度お試しください。",
+    };
+  }
 }
 
 export default function Home() {
@@ -169,9 +202,7 @@ export default function Home() {
       });
 
       const responseText = await response.text();
-      const payload = responseText
-        ? (JSON.parse(responseText) as { image?: string; error?: string })
-        : {};
+      const payload = parseGenerateResponse(responseText);
 
       if (!response.ok) {
         throw new Error(payload.error || "画像生成に失敗しました。");
