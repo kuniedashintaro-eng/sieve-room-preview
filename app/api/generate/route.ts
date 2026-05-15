@@ -1,5 +1,6 @@
 import OpenAI, { toFile } from "openai";
 import { NextResponse } from "next/server";
+import sharp from "sharp";
 import { findSieveProduct } from "@/lib/sieveProducts";
 
 export const runtime = "nodejs";
@@ -15,6 +16,20 @@ function readTextField(formData: FormData, name: string) {
 
 function errorResponse(message: string, status = 400) {
   return NextResponse.json({ error: message }, { status });
+}
+
+async function normalizeImageForOpenAI(buffer: Buffer) {
+  return sharp(buffer, { failOn: "none" })
+    .rotate()
+    .flatten({ background: "#ffffff" })
+    .resize({
+      width: 1536,
+      height: 1536,
+      fit: "inside",
+      withoutEnlargement: true,
+    })
+    .png()
+    .toBuffer();
 }
 
 export async function POST(request: Request) {
@@ -62,9 +77,9 @@ export async function POST(request: Request) {
 
   try {
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-    const imageBuffer = Buffer.from(await roomImage.arrayBuffer());
-    const imageFile = await toFile(imageBuffer, roomImage.name || "room-image.jpg", {
-      type: roomImage.type,
+    const imageBuffer = await normalizeImageForOpenAI(Buffer.from(await roomImage.arrayBuffer()));
+    const imageFile = await toFile(imageBuffer, "room-image.png", {
+      type: "image/png",
     });
     const productImageResponse = await fetch(selectedProduct.imageUrl);
 
@@ -72,9 +87,11 @@ export async function POST(request: Request) {
       return errorResponse("SIEVEの商品画像を取得できませんでした。時間をおいて再度お試しください。", 502);
     }
 
-    const productImageBuffer = Buffer.from(await productImageResponse.arrayBuffer());
-    const productImageFile = await toFile(productImageBuffer, `${selectedProduct.id}.jpg`, {
-      type: productImageResponse.headers.get("content-type") || "image/jpeg",
+    const productImageBuffer = await normalizeImageForOpenAI(
+      Buffer.from(await productImageResponse.arrayBuffer()),
+    );
+    const productImageFile = await toFile(productImageBuffer, `${selectedProduct.id}.png`, {
+      type: "image/png",
     });
 
     const result = await client.images.edit({
