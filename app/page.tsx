@@ -13,6 +13,35 @@ function formatFileSize(bytes: number) {
   return `${mb.toFixed(mb >= 10 ? 0 : 1)}MB`;
 }
 
+function getImageExtension(file: File) {
+  if (file.type === "image/png") {
+    return "png";
+  }
+
+  if (file.type === "image/webp") {
+    return "webp";
+  }
+
+  return "jpg";
+}
+
+function getFriendlyErrorMessage(caughtError: unknown) {
+  const message =
+    caughtError instanceof Error
+      ? caughtError.message
+      : "画像生成に失敗しました。時間をおいて再度お試しください。";
+
+  if (message.includes("The string did not match the expected pattern")) {
+    return "スマホブラウザ側で画像送信に失敗しました。ページを再読み込みして、同じ画像をもう一度選択してから生成してください。続く場合は別のブラウザでお試しください。";
+  }
+
+  if (message.includes("Failed to fetch") || message.includes("NetworkError")) {
+    return "通信に失敗しました。ネットワーク環境を確認し、ページを再読み込みしてからもう一度お試しください。";
+  }
+
+  return message;
+}
+
 export default function Home() {
   const [roomImage, setRoomImage] = useState<File | null>(null);
   const [selectedProductId, setSelectedProductId] = useState(SIEVE_PRODUCTS[0]?.id ?? "");
@@ -127,19 +156,22 @@ export default function Home() {
     }
 
     const formData = new FormData();
-    formData.append("roomImage", roomImage);
+    formData.append("roomImage", roomImage, `room-image.${getImageExtension(roomImage)}`);
     formData.append("productId", selectedProduct.id);
     formData.append("placementInstruction", placementInstruction.trim());
 
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/generate", {
+      const response = await fetch(new URL("/api/generate", window.location.origin), {
         method: "POST",
         body: formData,
       });
 
-      const payload = (await response.json()) as { image?: string; error?: string };
+      const responseText = await response.text();
+      const payload = responseText
+        ? (JSON.parse(responseText) as { image?: string; error?: string })
+        : {};
 
       if (!response.ok) {
         throw new Error(payload.error || "画像生成に失敗しました。");
@@ -153,11 +185,7 @@ export default function Home() {
       updateRemainingGenerations(remainingGenerations - 1);
       setStatusMessage("SIEVE商品のプレビュー画像を生成しました。");
     } catch (caughtError) {
-      setError(
-        caughtError instanceof Error
-          ? caughtError.message
-          : "画像生成に失敗しました。時間をおいて再度お試しください。",
-      );
+      setError(getFriendlyErrorMessage(caughtError));
     } finally {
       setIsLoading(false);
     }
