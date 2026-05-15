@@ -33,6 +33,7 @@ npm run dev -- --port 3001
 - TypeScript
 - Tailwind CSS
 - OpenAI Image Edit API
+- Image model: `gpt-image-2`
 - APIキーはサーバー側の `/api/generate` のみで使用
 - SIEVE商品のみ選択可能
 - 商品リストは `lib/sieveProducts.ts` の固定配列で管理

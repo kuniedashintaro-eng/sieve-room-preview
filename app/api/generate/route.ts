@@ -8,6 +8,7 @@ export const maxDuration = 60;
 
 const MAX_IMAGE_SIZE_BYTES = 50 * 1024 * 1024;
 const SUPPORTED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+const IMAGE_MODEL = "gpt-image-2";
 
 function readTextField(formData: FormData, name: string) {
   const value = formData.get(name);
@@ -95,7 +96,7 @@ export async function POST(request: Request) {
     });
 
     const result = await client.images.edit({
-      model: process.env.OPENAI_IMAGE_MODEL || "gpt-image-1",
+      model: IMAGE_MODEL,
       image: [imageFile, productImageFile],
       prompt,
       input_fidelity: "high",
