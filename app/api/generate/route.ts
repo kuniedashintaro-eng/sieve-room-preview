@@ -4,7 +4,7 @@ import sharp from "sharp";
 import { findSieveProduct } from "@/lib/sieveProducts";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 const MAX_IMAGE_SIZE_BYTES = 50 * 1024 * 1024;
 const SUPPORTED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);

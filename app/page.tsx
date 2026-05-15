@@ -86,6 +86,7 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [remainingGenerations, setRemainingGenerations] = useState(GENERATION_LIMIT);
   const [isResetOpen, setIsResetOpen] = useState(false);
+  const [resetStep, setResetStep] = useState<1 | 2>(1);
   const [resetCode, setResetCode] = useState("");
   const [resetWord, setResetWord] = useState("");
   const [resetMessage, setResetMessage] = useState("");
@@ -225,16 +226,36 @@ export default function Home() {
   function handleResetSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (resetCode === "19910114" && resetWord === "SIEVERS") {
+    if (resetStep === 1) {
+      if (resetCode === "19910114") {
+        setResetStep(2);
+        setResetMessage("");
+        return;
+      }
+
+      setResetMessage("認証に失敗しました");
+      return;
+    }
+
+    if (resetWord === "SIEVERS") {
       // Beta-only local reset. For production, move quota tracking and reset authorization to the server.
       updateRemainingGenerations(GENERATION_LIMIT);
       setResetMessage("回数をリセットしました");
       setResetCode("");
       setResetWord("");
+      setResetStep(1);
       return;
     }
 
     setResetMessage("認証に失敗しました");
+  }
+
+  function openResetModal() {
+    setIsResetOpen(true);
+    setResetStep(1);
+    setResetCode("");
+    setResetWord("");
+    setResetMessage("");
   }
 
   return (
@@ -423,22 +444,17 @@ export default function Home() {
           </div>
         </section>
 
-        <div className="pb-8 text-center text-[10px] font-medium text-slate-300">
-          {isFull ? "full" : `${remainingGenerations} / ${GENERATION_LIMIT}`}
+        <div className="flex items-center justify-center gap-3 pb-8 text-[10px] font-medium text-slate-300">
+          <span>{isFull ? "full" : `${remainingGenerations} / ${GENERATION_LIMIT}`}</span>
+          <button
+            type="button"
+            onClick={openResetModal}
+            className="rounded border border-slate-200 px-1.5 py-0.5 text-[9px] tracking-[0.12em] text-slate-300 opacity-35 transition hover:opacity-70"
+          >
+            STAFF
+          </button>
         </div>
       </div>
-
-      <button
-        type="button"
-        onClick={() => {
-          setIsResetOpen(true);
-          setResetMessage("");
-        }}
-        className="fixed bottom-3 right-3 z-40 h-7 w-7 rounded-full border border-slate-300 bg-white text-xs text-slate-700 opacity-25 shadow-sm transition hover:opacity-70"
-        aria-label="Reset usage count"
-      >
-        .
-      </button>
 
       {isResetOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/35 px-4">
@@ -447,12 +463,15 @@ export default function Home() {
               <div>
                 <h2 className="text-lg font-semibold text-slate-950">利用回数リセット</h2>
                 <p className="mt-1 text-sm leading-6 text-slate-500">
-                  β版の簡易認証です。
+                  {resetStep === 1 ? "認証コードを入力してください。" : "認証ワードを入力してください。"}
                 </p>
               </div>
               <button
                 type="button"
-                onClick={() => setIsResetOpen(false)}
+                onClick={() => {
+                  setIsResetOpen(false);
+                  setResetStep(1);
+                }}
                 className="rounded-md px-2 py-1 text-sm font-semibold text-slate-500 hover:bg-slate-100"
               >
                 閉じる
@@ -460,23 +479,28 @@ export default function Home() {
             </div>
 
             <form onSubmit={handleResetSubmit} className="mt-5 grid gap-4">
-              <label className="grid gap-2">
-                <span className="text-sm font-semibold text-slate-800">認証コード</span>
-                <input
-                  value={resetCode}
-                  onChange={(event) => setResetCode(event.target.value)}
-                  className="rounded-md border border-slate-300 px-3 py-2 text-base outline-none focus:border-emerald-600 focus:ring-4 focus:ring-emerald-100"
-                />
-              </label>
-
-              <label className="grid gap-2">
-                <span className="text-sm font-semibold text-slate-800">認証ワード</span>
-                <input
-                  value={resetWord}
-                  onChange={(event) => setResetWord(event.target.value)}
-                  className="rounded-md border border-slate-300 px-3 py-2 text-base outline-none focus:border-emerald-600 focus:ring-4 focus:ring-emerald-100"
-                />
-              </label>
+              {resetStep === 1 ? (
+                <label className="grid gap-2">
+                  <span className="text-sm font-semibold text-slate-800">認証コード</span>
+                  <input
+                    value={resetCode}
+                    onChange={(event) => setResetCode(event.target.value)}
+                    inputMode="numeric"
+                    autoFocus
+                    className="rounded-md border border-slate-300 px-3 py-2 text-base outline-none focus:border-emerald-600 focus:ring-4 focus:ring-emerald-100"
+                  />
+                </label>
+              ) : (
+                <label className="grid gap-2">
+                  <span className="text-sm font-semibold text-slate-800">認証ワード</span>
+                  <input
+                    value={resetWord}
+                    onChange={(event) => setResetWord(event.target.value)}
+                    autoFocus
+                    className="rounded-md border border-slate-300 px-3 py-2 text-base outline-none focus:border-emerald-600 focus:ring-4 focus:ring-emerald-100"
+                  />
+                </label>
+              )}
 
               {resetMessage ? (
                 <div
@@ -494,7 +518,7 @@ export default function Home() {
                 type="submit"
                 className="inline-flex h-11 items-center justify-center rounded-md bg-slate-950 px-4 text-sm font-semibold text-white hover:bg-slate-800"
               >
-                リセット
+                {resetStep === 1 ? "次へ" : "リセット"}
               </button>
             </form>
           </div>
