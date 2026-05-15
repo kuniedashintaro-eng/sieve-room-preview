@@ -99,7 +99,6 @@ export async function POST(request: Request) {
       model: IMAGE_MODEL,
       image: [imageFile, productImageFile],
       prompt,
-      input_fidelity: "high",
       size: "1024x1024",
     });
 
