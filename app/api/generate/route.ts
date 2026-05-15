@@ -19,6 +19,32 @@ function errorResponse(message: string, status = 400) {
   return NextResponse.json({ error: message }, { status });
 }
 
+function getSeatCountInstruction(productName: string, productCategory: string) {
+  const source = `${productName} ${productCategory}`;
+
+  if (source.includes("4人掛け")) {
+    return "The selected product is a 4-seater sofa. It must look like a 4-seater sofa with the correct length and seating capacity. Do not make it smaller or change it into a 1-seater, 2-seater, or 3-seater.";
+  }
+
+  if (source.includes("3人掛け")) {
+    return "The selected product is a 3-seater sofa. It must look like a 3-seater sofa with the correct length and seating capacity. Do not make it smaller or larger, and do not change it into a 1-seater, 2-seater, or 4-seater.";
+  }
+
+  if (source.includes("2人掛け")) {
+    return "The selected product is a 2-seater sofa. It must clearly remain a 2-seater sofa with the correct compact width and two-person seating capacity. Do not stretch it into a 3-seater or 4-seater sofa.";
+  }
+
+  if (source.includes("1人掛け")) {
+    return "The selected product is a 1-seater sofa. It must clearly remain a single-seat chair-sized sofa for one person. Do not enlarge it into a 2-seater, 3-seater, or 4-seater sofa.";
+  }
+
+  if (source.includes("オットマン")) {
+    return "The selected product is an ottoman. It must remain an ottoman, not a sofa with a backrest or armrests.";
+  }
+
+  return "";
+}
+
 async function normalizeImageForOpenAI(buffer: Buffer) {
   return sharp(buffer, { failOn: "none" })
     .rotate()
@@ -74,7 +100,11 @@ export async function POST(request: Request) {
     return errorResponse("画像サイズが大きすぎます。50MB未満の画像をアップロードしてください。");
   }
 
-  const prompt = `This is a realistic room photo uploaded by the user. The second input image is the highest-priority visual reference for the selected SIEVE furniture, preferably an official catalog-style product photo with a white or plain background. Place that exact selected SIEVE furniture naturally into the specified area of the room. Preserve the furniture's shape, arms, back, legs, cushions, proportions, material, color, and visible design details as much as possible. Keep the original room structure, perspective, lighting, shadows, scale, floor contact, camera angle, and atmosphere. Do not change the room unnecessarily. Use only the selected SIEVE product as the furniture reference. Product name: ${selectedProduct.name}. Product description: ${selectedProduct.description}. Placement instruction: ${placementInstruction}. Generate a realistic interior preview image for EC purchase consideration.`;
+  const seatCountInstruction = getSeatCountInstruction(
+    selectedProduct.name,
+    selectedProduct.category,
+  );
+  const prompt = `This is a realistic room photo uploaded by the user. The second input image is the highest-priority visual reference for the selected SIEVE furniture, preferably an official catalog-style product photo with a white or plain background. Place that exact selected SIEVE furniture naturally into the specified area of the room. Preserve the furniture's shape, arms, back, legs, cushions, proportions, material, color, visible design details, and seating capacity as much as possible. ${seatCountInstruction} Keep the original room structure, perspective, lighting, shadows, scale, floor contact, camera angle, and atmosphere. Do not change the room unnecessarily. Use only the selected SIEVE product as the furniture reference. Product name: ${selectedProduct.name}. Product category: ${selectedProduct.category}. Product description: ${selectedProduct.description}. Placement instruction: ${placementInstruction}. Generate a realistic interior preview image for EC purchase consideration.`;
 
   try {
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
