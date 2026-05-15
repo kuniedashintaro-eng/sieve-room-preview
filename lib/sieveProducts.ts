@@ -3,11 +3,12 @@ export type SieveProduct = {
   name: string;
   productUrl: string;
   imageUrl: string;
+  referenceImageUrl?: string;
   category: string;
   description: string;
 };
 
-export const SIEVE_PRODUCTS = [
+export const SIEVE_PRODUCTS: SieveProduct[] = [
   {
     id: "1000041010010",
     name: "〖SIEVE〗レクト ユニットソファ 3人掛け カウチソファ",

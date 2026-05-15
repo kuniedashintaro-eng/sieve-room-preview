@@ -74,7 +74,7 @@ export async function POST(request: Request) {
     return errorResponse("画像サイズが大きすぎます。50MB未満の画像をアップロードしてください。");
   }
 
-  const prompt = `This is a realistic room photo uploaded by the user. Place the selected SIEVE furniture naturally into the specified area of the room. Keep the original room structure, perspective, lighting, shadows, scale, floor contact, camera angle, and atmosphere. Do not change the room unnecessarily. Use only the selected SIEVE product as the furniture reference. Product name: ${selectedProduct.name}. Product description: ${selectedProduct.description}. Placement instruction: ${placementInstruction}. Generate a realistic interior preview image for EC purchase consideration.`;
+  const prompt = `This is a realistic room photo uploaded by the user. The second input image is the highest-priority visual reference for the selected SIEVE furniture, preferably an official catalog-style product photo with a white or plain background. Place that exact selected SIEVE furniture naturally into the specified area of the room. Preserve the furniture's shape, arms, back, legs, cushions, proportions, material, color, and visible design details as much as possible. Keep the original room structure, perspective, lighting, shadows, scale, floor contact, camera angle, and atmosphere. Do not change the room unnecessarily. Use only the selected SIEVE product as the furniture reference. Product name: ${selectedProduct.name}. Product description: ${selectedProduct.description}. Placement instruction: ${placementInstruction}. Generate a realistic interior preview image for EC purchase consideration.`;
 
   try {
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -82,7 +82,8 @@ export async function POST(request: Request) {
     const imageFile = await toFile(imageBuffer, "room-image.png", {
       type: "image/png",
     });
-    const productImageResponse = await fetch(selectedProduct.imageUrl);
+    const productReferenceImageUrl = selectedProduct.referenceImageUrl ?? selectedProduct.imageUrl;
+    const productImageResponse = await fetch(productReferenceImageUrl);
 
     if (!productImageResponse.ok) {
       return errorResponse("SIEVEの商品画像を取得できませんでした。時間をおいて再度お試しください。", 502);
