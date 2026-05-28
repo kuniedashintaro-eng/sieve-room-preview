@@ -5,6 +5,8 @@ import { SIEVE_PRODUCT_CATEGORIES, SIEVE_PRODUCTS } from "@/lib/sieveProducts";
 
 const WARNING_IMAGE_SIZE_BYTES = 10 * 1024 * 1024;
 const MAX_IMAGE_SIZE_BYTES = 50 * 1024 * 1024;
+const TARGET_UPLOAD_SIZE_BYTES = 3 * 1024 * 1024;
+const MAX_UPLOAD_IMAGE_DIMENSION = 1600;
 const GENERATION_LIMIT = 100;
 const STORAGE_KEY = "sieve-room-preview-remaining-generations";
 
@@ -14,15 +16,79 @@ function formatFileSize(bytes: number) {
 }
 
 function getImageExtension(file: File) {
-  if (file.type === "image/png") {
-    return "png";
-  }
-
-  if (file.type === "image/webp") {
-    return "webp";
-  }
-
   return "jpg";
+}
+
+function blobToFile(blob: Blob, fileName: string) {
+  return new File([blob], fileName, {
+    type: "image/jpeg",
+    lastModified: Date.now(),
+  });
+}
+
+async function canvasToJpegBlob(canvas: HTMLCanvasElement, quality: number) {
+  return new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => {
+        if (blob) {
+          resolve(blob);
+          return;
+        }
+
+        reject(new Error("画像の軽量化に失敗しました。別の画像をお試しください。"));
+      },
+      "image/jpeg",
+      quality,
+    );
+  });
+}
+
+async function compressImageForUpload(file: File) {
+  const objectUrl = URL.createObjectURL(file);
+
+  try {
+    const image = new Image();
+    image.decoding = "async";
+    image.src = objectUrl;
+
+    await new Promise<void>((resolve, reject) => {
+      image.onload = () => resolve();
+      image.onerror = () => reject(new Error("画像を読み込めませんでした。JPGまたはPNGでお試しください。"));
+    });
+
+    const scale = Math.min(
+      1,
+      MAX_UPLOAD_IMAGE_DIMENSION / image.naturalWidth,
+      MAX_UPLOAD_IMAGE_DIMENSION / image.naturalHeight,
+    );
+    const width = Math.max(1, Math.round(image.naturalWidth * scale));
+    const height = Math.max(1, Math.round(image.naturalHeight * scale));
+    const canvas = document.createElement("canvas");
+    const context = canvas.getContext("2d");
+
+    if (!context) {
+      throw new Error("画像の軽量化に失敗しました。別のブラウザでお試しください。");
+    }
+
+    canvas.width = width;
+    canvas.height = height;
+    context.drawImage(image, 0, 0, width, height);
+
+    const qualities = [0.86, 0.8, 0.74, 0.68, 0.62];
+    let compressedBlob = await canvasToJpegBlob(canvas, qualities[0]);
+
+    for (const quality of qualities.slice(1)) {
+      if (compressedBlob.size <= TARGET_UPLOAD_SIZE_BYTES) {
+        break;
+      }
+
+      compressedBlob = await canvasToJpegBlob(canvas, quality);
+    }
+
+    return blobToFile(compressedBlob, "room-image.jpg");
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
 }
 
 function getFriendlyErrorMessage(caughtError: unknown) {
@@ -150,12 +216,39 @@ export default function Home() {
     window.localStorage.setItem(STORAGE_KEY, String(safeValue));
   }
 
-  function handleImageChange(event: ChangeEvent<HTMLInputElement>) {
+  async function handleImageChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0] ?? null;
-    setRoomImage(file);
     setGeneratedImage("");
     setError("");
     setStatusMessage("");
+
+    if (!file) {
+      setRoomImage(null);
+      return;
+    }
+
+    if (file.size > MAX_IMAGE_SIZE_BYTES) {
+      setRoomImage(null);
+      setError("画像サイズが大きすぎます。別の画像を選択してください。");
+      return;
+    }
+
+    try {
+      setStatusMessage("アップロード画像を生成用に軽量化しています。");
+      const compressedFile = await compressImageForUpload(file);
+      setRoomImage(compressedFile);
+
+      if (compressedFile.size < file.size) {
+        setStatusMessage(
+          `アップロード画像を生成用に軽量化しました（${formatFileSize(file.size)} → ${formatFileSize(
+            compressedFile.size,
+          )}）。`,
+        );
+      }
+    } catch (caughtError) {
+      setRoomImage(null);
+      setError(getFriendlyErrorMessage(caughtError));
+    }
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -286,7 +379,7 @@ export default function Home() {
               <span className="text-sm font-semibold text-slate-800">部屋画像アップロード</span>
               <input
                 type="file"
-                accept="image/png,image/jpeg,image/webp"
+                accept="image/png,image/jpeg,image/webp,image/heic,image/heif"
                 onChange={handleImageChange}
                 className="block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm file:mr-4 file:rounded-md file:border-0 file:bg-slate-950 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-slate-800"
               />
