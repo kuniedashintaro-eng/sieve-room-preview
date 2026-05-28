@@ -4,8 +4,8 @@
 
 :root {
   color-scheme: light;
-  background: #f6f7f4;
-  color: #111827;
+  background: #ffffff;
+  color: #333333;
 }
 
 * {
@@ -15,9 +15,17 @@
 body {
   min-height: 100vh;
   margin: 0;
-  background:
-    linear-gradient(180deg, rgba(246, 247, 244, 0.94), rgba(246, 247, 244, 1)),
-    radial-gradient(circle at top left, rgba(134, 179, 161, 0.2), transparent 36%),
-    #f6f7f4;
-  font-family: Arial, Helvetica, sans-serif;
+  background: #ffffff;
+  font-family:
+    "Noto Sans JP",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Yu Gothic",
+    YuGothic,
+    "Hiragino Kaku Gothic ProN",
+    Meiryo,
+    sans-serif;
+  color: #333333;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }

@@ -470,41 +470,49 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen px-4 py-8 text-slate-950 sm:px-6 lg:px-8">
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
-        <header className="flex flex-col gap-3">
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700">
-            SIEVE official EC preview
-          </p>
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <h1 className="text-4xl font-semibold leading-tight text-slate-950 sm:text-5xl">
-                SIEVE Room Preview
-              </h1>
-              <p className="mt-3 max-w-2xl text-base leading-7 text-slate-600">
-                SIEVE公式サイト内のソファから商品を選び、部屋写真に自然に配置した購入検討用イメージを生成します。
-              </p>
-            </div>
+    <main className="min-h-screen bg-white px-4 py-6 text-[#333333] sm:px-6 lg:px-8">
+      <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-10">
+        <header className="border-b border-[#d8d8d8] pb-8">
+          <div className="flex items-center justify-between gap-4 border-b border-[#eeeeee] pb-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#707070]">
+              Official EC Preview
+            </p>
+            <a
+              href="https://www.sieve.jp/shop/default.aspx"
+              target="_blank"
+              rel="noreferrer"
+              className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#707070] underline-offset-4 hover:underline"
+            >
+              SIEVE Online Store
+            </a>
+          </div>
+          <div className="pt-8">
+            <h1 className="text-[34px] font-bold leading-tight tracking-[0.08em] text-[#333333] sm:text-[46px]">
+              SIEVE Room Preview
+            </h1>
+            <p className="mt-4 max-w-2xl text-sm font-medium leading-8 tracking-[0.08em] text-[#666666]">
+              SIEVE公式サイト内のソファから商品を選び、部屋写真に自然に配置した購入検討用イメージを生成します。
+            </p>
           </div>
         </header>
 
-        <section className="grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+        <section className="grid gap-8 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
           <form
             onSubmit={handleSubmit}
-            className="flex flex-col gap-5 rounded-lg border border-slate-200 bg-white p-5 shadow-soft"
+            className="flex flex-col gap-6 border border-[#dcdcdc] bg-white p-5 sm:p-7"
           >
             <label className="flex flex-col gap-2">
-              <span className="text-sm font-semibold text-slate-800">部屋画像アップロード</span>
+              <span className="text-sm font-bold tracking-[0.08em] text-[#333333]">部屋画像アップロード</span>
               <input
                 type="file"
                 accept="image/png,image/jpeg,image/webp,image/heic,image/heif"
                 onChange={handleImageChange}
-                className="block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm file:mr-4 file:rounded-md file:border-0 file:bg-slate-950 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-slate-800"
+                className="block w-full border border-[#cccccc] bg-white px-3 py-2 text-sm text-[#333333] transition hover:border-[#666666] file:mr-4 file:border-0 file:bg-[#333333] file:px-5 file:py-2.5 file:text-sm file:font-bold file:tracking-[0.08em] file:text-white hover:file:opacity-70"
               />
             </label>
 
-            <div className="rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-xs leading-6 text-slate-500">
-              <p className="font-semibold text-slate-700">きれいに生成するための撮影メモ</p>
+            <div className="border border-[#dcdcdc] bg-[#f8f8f8] px-4 py-4 text-xs leading-6 tracking-[0.04em] text-[#666666]">
+              <p className="font-bold text-[#333333]">きれいに生成するための撮影メモ</p>
               <ul className="mt-1 list-disc space-y-1 pl-4">
                 <li>家具が入る余裕ができるだけある写真を使ってください。</li>
                 <li>部屋の小物などが少なく、シンプルな写真ほど精度が上がります。</li>
@@ -514,13 +522,13 @@ export default function Home() {
             </div>
 
             {imageWarning ? (
-              <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
+              <div className="border border-[#d8b36a] bg-[#fffaf0] px-4 py-3 text-sm leading-6 text-[#6f5521]">
                 {imageWarning}
               </div>
             ) : null}
 
             <label className="flex flex-col gap-2">
-              <span className="text-sm font-semibold text-slate-800">SIEVEソファ選択</span>
+              <span className="text-sm font-bold tracking-[0.08em] text-[#333333]">SIEVEソファ選択</span>
               <select
                 value={selectedProductId}
                 onChange={(event) => {
@@ -529,7 +537,7 @@ export default function Home() {
                   setError("");
                   setStatusMessage("");
                 }}
-                className="rounded-md border border-slate-300 bg-white px-3 py-3 text-base outline-none transition focus:border-emerald-600 focus:ring-4 focus:ring-emerald-100"
+                className="h-12 border border-[#cccccc] bg-white px-3 text-base text-[#333333] outline-none transition hover:border-[#666666] focus:border-[#707070] focus:ring-4 focus:ring-[#88aeb7]/20"
               >
                 {groupedProducts.map((group) => (
                   <optgroup key={group.category} label={group.category}>
@@ -544,28 +552,28 @@ export default function Home() {
             </label>
 
             {selectedProduct ? (
-              <div className="grid gap-3 rounded-md border border-slate-200 bg-slate-50 p-3 sm:grid-cols-[112px_1fr]">
+              <div className="grid gap-4 border border-[#dcdcdc] bg-white p-4 sm:grid-cols-[116px_1fr]">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={selectedProduct.imageUrl}
                   alt={selectedProduct.name}
-                  className="aspect-square w-full rounded-md border border-slate-200 bg-white object-contain"
+                  className="aspect-square w-full border border-[#eeeeee] bg-[#f8f8f8] object-contain"
                 />
                 <div className="flex flex-col gap-2">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-700">
+                    <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#557b83]">
                       {selectedProduct.category}
                     </p>
-                    <p className="mt-1 text-sm font-semibold leading-6 text-slate-900">
+                    <p className="mt-1 text-sm font-bold leading-6 tracking-[0.04em] text-[#333333]">
                       {selectedProduct.name}
                     </p>
                   </div>
-                  <p className="text-sm leading-6 text-slate-600">{selectedProduct.description}</p>
+                  <p className="text-sm leading-7 tracking-[0.03em] text-[#666666]">{selectedProduct.description}</p>
                   <a
                     href={selectedProduct.productUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-sm font-semibold text-emerald-700 hover:text-emerald-900"
+                    className="w-fit text-sm font-bold tracking-[0.04em] text-[#557b83] underline-offset-4 hover:text-[#35545a] hover:underline"
                   >
                     SIEVE公式商品ページ
                   </a>
@@ -574,24 +582,24 @@ export default function Home() {
             ) : null}
 
             <label className="flex flex-col gap-2">
-              <span className="text-sm font-semibold text-slate-800">配置場所の説明</span>
+              <span className="text-sm font-bold tracking-[0.08em] text-[#333333]">配置場所の説明</span>
               <textarea
                 value={placementInstruction}
                 onChange={(event) => setPlacementInstruction(event.target.value)}
                 placeholder="例: 窓の右側、ラグの上に壁と平行に配置"
                 rows={5}
-                className="resize-none rounded-md border border-slate-300 px-3 py-3 text-base outline-none transition focus:border-emerald-600 focus:ring-4 focus:ring-emerald-100"
+                className="resize-none border border-[#cccccc] px-4 py-4 text-base text-[#333333] outline-none transition placeholder:text-[#999999] hover:border-[#666666] focus:border-[#707070] focus:ring-4 focus:ring-[#88aeb7]/20"
               />
             </label>
 
             {error ? (
-              <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm leading-6 text-red-800">
+              <div className="border border-[#e3b9b9] bg-[#fbf0f0] px-4 py-3 text-sm leading-6 text-[#a94442]">
                 {error}
               </div>
             ) : null}
 
             {statusMessage ? (
-              <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm leading-6 text-emerald-900">
+              <div className="border border-[#88aeb7] bg-[#f4f8f9] px-4 py-3 text-sm leading-6 text-[#35545a]">
                 {statusMessage}
               </div>
             ) : null}
@@ -599,55 +607,55 @@ export default function Home() {
             <button
               type="submit"
               disabled={isLoading || isFull}
-              className="inline-flex h-12 items-center justify-center rounded-md bg-emerald-700 px-5 text-base font-semibold text-white transition hover:bg-emerald-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+              className="inline-flex h-12 items-center justify-center bg-[#333333] px-5 text-sm font-bold tracking-[0.16em] text-white transition hover:opacity-70 disabled:cursor-not-allowed disabled:bg-[#999999]"
             >
               {isLoading ? "生成中..." : isFull ? "full" : "生成ボタン"}
             </button>
 
             {isLoading ? (
-              <div className="flex items-center gap-3 text-sm text-slate-600">
-                <span className="h-3 w-3 animate-pulse rounded-full bg-emerald-600" />
+              <div className="flex items-center gap-3 text-sm leading-6 text-[#666666]">
+                <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-[#88aeb7]" />
                 SIEVE商品の形状と部屋の光、遠近感、影を合わせて配置しています。
               </div>
             ) : null}
           </form>
 
           <div className="grid gap-6">
-            <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
+            <section className="border border-[#dcdcdc] bg-white p-5 sm:p-7">
               <div className="mb-3 flex items-center justify-between gap-3">
-                <h2 className="text-lg font-semibold text-slate-900">アップロード画像</h2>
+                <h2 className="text-lg font-bold tracking-[0.08em] text-[#333333]">アップロード画像</h2>
                 {roomImage ? (
-                  <span className="text-xs font-medium text-slate-500">
+                  <span className="text-xs font-medium text-[#777777]">
                     {formatFileSize(roomImage.size)}
                   </span>
                 ) : null}
               </div>
-              <div className="flex aspect-[4/3] items-center justify-center overflow-hidden rounded-md border border-dashed border-slate-300 bg-slate-50">
+              <div className="flex aspect-[4/3] items-center justify-center overflow-hidden border border-dashed border-[#c8c8c8] bg-[#f8f8f8]">
                 {previewUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={previewUrl} alt="Uploaded room" className="h-full w-full object-contain" />
                 ) : (
-                  <p className="px-6 text-center text-sm leading-6 text-slate-500">
+                  <p className="px-6 text-center text-sm leading-6 tracking-[0.04em] text-[#777777]">
                     部屋画像を選択するとここにプレビューが表示されます。
                   </p>
                 )}
               </div>
             </section>
 
-            <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
+            <section className="border border-[#dcdcdc] bg-white p-5 sm:p-7">
               <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <h2 className="text-lg font-semibold text-slate-900">生成結果画像</h2>
+                <h2 className="text-lg font-bold tracking-[0.08em] text-[#333333]">生成結果画像</h2>
                 {generatedImage ? (
                   <a
                     href={generatedImage}
                     download="sieve-room-preview.png"
-                    className="inline-flex h-10 items-center justify-center rounded-md border border-slate-300 px-4 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
+                    className="inline-flex h-10 items-center justify-center border border-[#707070] px-4 text-xs font-bold tracking-[0.12em] text-[#333333] transition hover:opacity-70"
                   >
                     生成画像をダウンロード
                   </a>
                 ) : null}
               </div>
-              <div className="flex aspect-[4/3] items-center justify-center overflow-hidden rounded-md border border-dashed border-slate-300 bg-slate-50">
+              <div className="flex aspect-[4/3] items-center justify-center overflow-hidden border border-dashed border-[#c8c8c8] bg-[#f8f8f8]">
                 {generatedImage ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -656,7 +664,7 @@ export default function Home() {
                     className="h-full w-full object-contain"
                   />
                 ) : (
-                  <p className="px-6 text-center text-sm leading-6 text-slate-500">
+                  <p className="px-6 text-center text-sm leading-6 tracking-[0.04em] text-[#777777]">
                     生成後のSIEVEインテリア画像がここに表示されます。
                   </p>
                 )}
@@ -665,16 +673,16 @@ export default function Home() {
           </div>
         </section>
 
-        <div className="grid gap-3 pb-8 text-center">
-          <p className="mx-auto max-w-2xl px-4 text-[11px] leading-5 text-slate-400">
+        <div className="grid gap-3 border-t border-[#eeeeee] pb-8 pt-8 text-center">
+          <p className="mx-auto max-w-2xl px-4 text-[11px] leading-6 tracking-[0.08em] text-[#9a9a9a]">
             生成画像は購入検討用のイメージです。実際の商品サイズ、設置可否、色味、形状、納まりを保証するものではありません。
           </p>
-          <div className="flex items-center justify-center gap-3 text-[10px] font-medium text-slate-300">
+          <div className="flex items-center justify-center gap-3 text-[10px] font-medium tracking-[0.08em] text-[#d0d0d0]">
             <span>{isFull ? "full" : `${remainingGenerations} / ${GENERATION_LIMIT}`}</span>
             <button
               type="button"
               onClick={openResetModal}
-              className="rounded border border-slate-200 px-1.5 py-0.5 text-[9px] tracking-[0.12em] text-slate-300 opacity-35 transition hover:opacity-70"
+              className="border border-[#eeeeee] px-1.5 py-0.5 text-[9px] tracking-[0.14em] text-[#c8c8c8] opacity-35 transition hover:opacity-70"
             >
               STAFF
             </button>
@@ -684,11 +692,11 @@ export default function Home() {
 
       {isResetOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/35 px-4">
-          <div className="w-full max-w-sm rounded-lg border border-slate-200 bg-white p-5 shadow-soft">
+          <div className="w-full max-w-sm border border-[#dcdcdc] bg-white p-5 shadow-soft">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h2 className="text-lg font-semibold text-slate-950">利用回数リセット</h2>
-                <p className="mt-1 text-sm leading-6 text-slate-500">
+                <h2 className="text-lg font-bold tracking-[0.08em] text-[#333333]">利用回数リセット</h2>
+                <p className="mt-1 text-sm leading-6 text-[#666666]">
                   {resetStep === 1 ? "認証コードを入力してください。" : "認証ワードを入力してください。"}
                 </p>
               </div>
@@ -698,7 +706,7 @@ export default function Home() {
                   setIsResetOpen(false);
                   setResetStep(1);
                 }}
-                className="rounded-md px-2 py-1 text-sm font-semibold text-slate-500 hover:bg-slate-100"
+                className="px-2 py-1 text-sm font-bold text-[#666666] hover:bg-[#f8f8f8]"
               >
                 閉じる
               </button>
@@ -707,32 +715,32 @@ export default function Home() {
             <form onSubmit={handleResetSubmit} className="mt-5 grid gap-4">
               {resetStep === 1 ? (
                 <label className="grid gap-2">
-                  <span className="text-sm font-semibold text-slate-800">認証コード</span>
+                  <span className="text-sm font-bold tracking-[0.08em] text-[#333333]">認証コード</span>
                   <input
                     value={resetCode}
                     onChange={(event) => setResetCode(event.target.value)}
                     inputMode="numeric"
                     autoFocus
-                    className="rounded-md border border-slate-300 px-3 py-2 text-base outline-none focus:border-emerald-600 focus:ring-4 focus:ring-emerald-100"
+                    className="border border-[#cccccc] px-3 py-2 text-base outline-none hover:border-[#666666] focus:border-[#707070] focus:ring-4 focus:ring-[#88aeb7]/20"
                   />
                 </label>
               ) : (
                 <label className="grid gap-2">
-                  <span className="text-sm font-semibold text-slate-800">認証ワード</span>
+                  <span className="text-sm font-bold tracking-[0.08em] text-[#333333]">認証ワード</span>
                   <input
                     value={resetWord}
                     onChange={(event) => setResetWord(event.target.value)}
                     autoFocus
-                    className="rounded-md border border-slate-300 px-3 py-2 text-base outline-none focus:border-emerald-600 focus:ring-4 focus:ring-emerald-100"
+                    className="border border-[#cccccc] px-3 py-2 text-base outline-none hover:border-[#666666] focus:border-[#707070] focus:ring-4 focus:ring-[#88aeb7]/20"
                   />
                 </label>
               )}
 
               {resetMessage ? (
                 <div
-                  className={`rounded-md px-4 py-3 text-sm leading-6 ${
+                  className={`px-4 py-3 text-sm leading-6 ${
                     resetMessage === "回数をリセットしました"
-                      ? "border border-emerald-200 bg-emerald-50 text-emerald-900"
+                      ? "border border-[#88aeb7] bg-[#f4f8f9] text-[#35545a]"
                       : "border border-red-200 bg-red-50 text-red-800"
                   }`}
                 >
@@ -742,7 +750,7 @@ export default function Home() {
 
               <button
                 type="submit"
-                className="inline-flex h-11 items-center justify-center rounded-md bg-slate-950 px-4 text-sm font-semibold text-white hover:bg-slate-800"
+                className="inline-flex h-11 items-center justify-center bg-[#333333] px-4 text-sm font-bold tracking-[0.12em] text-white hover:opacity-70"
               >
                 {resetStep === 1 ? "次へ" : "リセット"}
               </button>
