@@ -292,6 +292,16 @@ export default function Home() {
               />
             </label>
 
+            <div className="rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-xs leading-6 text-slate-500">
+              <p className="font-semibold text-slate-700">きれいに生成するための撮影メモ</p>
+              <ul className="mt-1 list-disc space-y-1 pl-4">
+                <li>家具が入る余裕ができるだけある写真を使ってください。</li>
+                <li>部屋の小物などが少なく、シンプルな写真ほど精度が上がります。</li>
+                <li>十分な明るさがある写真がおすすめです。</li>
+                <li>できるだけ部屋を広めに写してください。</li>
+              </ul>
+            </div>
+
             {imageWarning ? (
               <div className="rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
                 {imageWarning}
@@ -444,15 +454,20 @@ export default function Home() {
           </div>
         </section>
 
-        <div className="flex items-center justify-center gap-3 pb-8 text-[10px] font-medium text-slate-300">
-          <span>{isFull ? "full" : `${remainingGenerations} / ${GENERATION_LIMIT}`}</span>
-          <button
-            type="button"
-            onClick={openResetModal}
-            className="rounded border border-slate-200 px-1.5 py-0.5 text-[9px] tracking-[0.12em] text-slate-300 opacity-35 transition hover:opacity-70"
-          >
-            STAFF
-          </button>
+        <div className="grid gap-3 pb-8 text-center">
+          <p className="mx-auto max-w-2xl px-4 text-[11px] leading-5 text-slate-400">
+            生成画像は購入検討用のイメージです。実際の商品サイズ、設置可否、色味、形状、納まりを保証するものではありません。
+          </p>
+          <div className="flex items-center justify-center gap-3 text-[10px] font-medium text-slate-300">
+            <span>{isFull ? "full" : `${remainingGenerations} / ${GENERATION_LIMIT}`}</span>
+            <button
+              type="button"
+              onClick={openResetModal}
+              className="rounded border border-slate-200 px-1.5 py-0.5 text-[9px] tracking-[0.12em] text-slate-300 opacity-35 transition hover:opacity-70"
+            >
+              STAFF
+            </button>
+          </div>
         </div>
       </div>
 
