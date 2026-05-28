@@ -2,6 +2,7 @@ import OpenAI, { toFile } from "openai";
 import { NextResponse } from "next/server";
 import sharp from "sharp";
 import { findSieveProduct } from "@/lib/sieveProducts";
+import { decrementRemainingGenerations, getRemainingGenerations } from "@/lib/quotaStore";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -100,6 +101,12 @@ export async function POST(request: Request) {
     return errorResponse("画像サイズが大きすぎます。50MB未満の画像をアップロードしてください。");
   }
 
+  const remainingBeforeGeneration = await getRemainingGenerations();
+
+  if (remainingBeforeGeneration !== null && remainingBeforeGeneration <= 0) {
+    return errorResponse("利用回数が上限に達しています。", 403);
+  }
+
   const seatCountInstruction = getSeatCountInstruction(
     selectedProduct.name,
     selectedProduct.category,
@@ -139,8 +146,11 @@ export async function POST(request: Request) {
       return errorResponse("画像生成結果を取得できませんでした。時間をおいて再度お試しください。", 502);
     }
 
+    const remaining = await decrementRemainingGenerations();
+
     return NextResponse.json({
       image: `data:image/png;base64,${imageBase64}`,
+      remaining,
     });
   } catch (error) {
     console.error("Image edit failed:", error);

@@ -9,6 +9,8 @@ const TARGET_UPLOAD_SIZE_BYTES = 3 * 1024 * 1024;
 const MAX_UPLOAD_IMAGE_DIMENSION = 1600;
 const GENERATION_LIMIT = 100;
 const STORAGE_KEY = "sieve-room-preview-remaining-generations";
+type QuotaMode = "local" | "shared";
+type GeneratePayload = { image?: string; error?: string; remaining?: number | null };
 
 function formatFileSize(bytes: number) {
   const mb = bytes / 1024 / 1024;
@@ -118,7 +120,7 @@ function parseGenerateResponse(responseText: string) {
   }
 
   try {
-    return JSON.parse(responseText) as { image?: string; error?: string };
+    return JSON.parse(responseText) as GeneratePayload;
   } catch {
     if (responseText.includes("Request Entity Too Large")) {
       return {
@@ -151,6 +153,7 @@ export default function Home() {
   const [statusMessage, setStatusMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [remainingGenerations, setRemainingGenerations] = useState(GENERATION_LIMIT);
+  const [quotaMode, setQuotaMode] = useState<QuotaMode>("local");
   const [isResetOpen, setIsResetOpen] = useState(false);
   const [resetStep, setResetStep] = useState<1 | 2>(1);
   const [resetCode, setResetCode] = useState("");
@@ -189,6 +192,78 @@ export default function Home() {
   }, [roomImage]);
 
   useEffect(() => {
+    async function loadSharedQuota() {
+      try {
+        const response = await fetch(new URL("/api/quota", window.location.origin), {
+          cache: "no-store",
+        });
+        const payload = (await response.json()) as {
+          mode?: QuotaMode;
+          remaining?: number | null;
+        };
+
+        if (response.ok && payload.mode === "shared" && typeof payload.remaining === "number") {
+          setQuotaMode("shared");
+          setRemainingGenerations(payload.remaining);
+          return;
+        }
+      } catch {
+        // Fallback to local quota when shared quota storage is not configured or unavailable.
+      }
+
+      setQuotaMode("local");
+      const storedValue = window.localStorage.getItem(STORAGE_KEY);
+      const parsedValue = storedValue === null ? GENERATION_LIMIT : Number(storedValue);
+      const safeValue = Number.isFinite(parsedValue)
+        ? Math.min(Math.max(parsedValue, 0), GENERATION_LIMIT)
+        : GENERATION_LIMIT;
+
+      setRemainingGenerations(safeValue);
+    }
+
+    loadSharedQuota();
+  }, []);
+
+  useEffect(() => {
+    if (quotaMode !== "shared") {
+      return;
+    }
+
+    async function refreshSharedQuota() {
+      try {
+        const response = await fetch(new URL("/api/quota", window.location.origin), {
+          cache: "no-store",
+        });
+        const payload = (await response.json()) as { remaining?: number | null };
+
+        if (response.ok && typeof payload.remaining === "number") {
+          setRemainingGenerations(payload.remaining);
+        }
+      } catch {
+        // Keep the last visible count if a background refresh fails.
+      }
+    }
+
+    function handleVisibilityChange() {
+      if (!document.hidden) {
+        refreshSharedQuota();
+      }
+    }
+
+    window.addEventListener("focus", refreshSharedQuota);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("focus", refreshSharedQuota);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [quotaMode]);
+
+  useEffect(() => {
+    if (quotaMode === "shared") {
+      return;
+    }
+
     const storedValue = window.localStorage.getItem(STORAGE_KEY);
     const parsedValue = storedValue === null ? GENERATION_LIMIT : Number(storedValue);
     const safeValue = Number.isFinite(parsedValue)
@@ -196,7 +271,7 @@ export default function Home() {
       : GENERATION_LIMIT;
 
     setRemainingGenerations(safeValue);
-  }, []);
+  }, [quotaMode]);
 
   useEffect(() => {
     if (!roomImage) {
@@ -213,7 +288,10 @@ export default function Home() {
   function updateRemainingGenerations(nextValue: number) {
     const safeValue = Math.min(Math.max(nextValue, 0), GENERATION_LIMIT);
     setRemainingGenerations(safeValue);
-    window.localStorage.setItem(STORAGE_KEY, String(safeValue));
+
+    if (quotaMode === "local") {
+      window.localStorage.setItem(STORAGE_KEY, String(safeValue));
+    }
   }
 
   async function handleImageChange(event: ChangeEvent<HTMLInputElement>) {
@@ -307,7 +385,11 @@ export default function Home() {
       }
 
       setGeneratedImage(payload.image);
-      updateRemainingGenerations(remainingGenerations - 1);
+      if (quotaMode === "shared" && typeof payload.remaining === "number") {
+        setRemainingGenerations(payload.remaining);
+      } else {
+        updateRemainingGenerations(remainingGenerations - 1);
+      }
       setStatusMessage("SIEVE商品のプレビュー画像を生成しました。");
     } catch (caughtError) {
       setError(getFriendlyErrorMessage(caughtError));
@@ -332,11 +414,47 @@ export default function Home() {
 
     if (resetWord === "SIEVERS") {
       // Beta-only local reset. For production, move quota tracking and reset authorization to the server.
-      updateRemainingGenerations(GENERATION_LIMIT);
-      setResetMessage("回数をリセットしました");
-      setResetCode("");
-      setResetWord("");
-      setResetStep(1);
+      if (quotaMode === "shared") {
+        fetch(new URL("/api/quota", window.location.origin), {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            action: "reset",
+            code: resetCode,
+            word: resetWord,
+          }),
+        })
+          .then(async (response) => {
+            const payload = (await response.json()) as {
+              error?: string;
+              remaining?: number | null;
+            };
+
+            if (!response.ok) {
+              throw new Error(payload.error || "認証に失敗しました");
+            }
+
+            if (typeof payload.remaining === "number") {
+              setRemainingGenerations(payload.remaining);
+            } else {
+              setRemainingGenerations(GENERATION_LIMIT);
+            }
+
+            setResetMessage("回数をリセットしました");
+            setResetCode("");
+            setResetWord("");
+            setResetStep(1);
+          })
+          .catch((caughtError) => setResetMessage(getFriendlyErrorMessage(caughtError)));
+      } else {
+        updateRemainingGenerations(GENERATION_LIMIT);
+        setResetMessage("回数をリセットしました");
+        setResetCode("");
+        setResetWord("");
+        setResetStep(1);
+      }
       return;
     }
 
