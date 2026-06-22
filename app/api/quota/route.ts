@@ -31,10 +31,10 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  let body: { action?: string; code?: string; word?: string };
+  let body: { action?: string; code?: string };
 
   try {
-    body = (await request.json()) as { action?: string; code?: string; word?: string };
+    body = (await request.json()) as { action?: string; code?: string };
   } catch {
     return errorResponse("リセット情報を読み取れませんでした。");
   }
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     return errorResponse("未対応の操作です。");
   }
 
-  if (body.code !== "19910114" || body.word !== "SIEVERS") {
+  if (body.code !== "19910114") {
     return errorResponse("認証に失敗しました", 401);
   }
 

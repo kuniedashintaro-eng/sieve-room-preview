@@ -155,9 +155,7 @@ export default function Home() {
   const [remainingGenerations, setRemainingGenerations] = useState(GENERATION_LIMIT);
   const [quotaMode, setQuotaMode] = useState<QuotaMode>("local");
   const [isResetOpen, setIsResetOpen] = useState(false);
-  const [resetStep, setResetStep] = useState<1 | 2>(1);
   const [resetCode, setResetCode] = useState("");
-  const [resetWord, setResetWord] = useState("");
   const [resetMessage, setResetMessage] = useState("");
 
   const selectedProduct = useMemo(
@@ -401,71 +399,50 @@ export default function Home() {
   function handleResetSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (resetStep === 1) {
-      if (resetCode === "19910114") {
-        setResetStep(2);
-        setResetMessage("");
-        return;
-      }
-
+    if (resetCode !== "19910114") {
       setResetMessage("認証に失敗しました");
       return;
     }
 
-    if (resetWord === "SIEVERS") {
-      // Beta-only local reset. For production, move quota tracking and reset authorization to the server.
-      if (quotaMode === "shared") {
-        fetch(new URL("/api/quota", window.location.origin), {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            action: "reset",
-            code: resetCode,
-            word: resetWord,
-          }),
+    // Beta-only local reset. For production, move reset authorization to a server-managed secret.
+    if (quotaMode === "shared") {
+      fetch(new URL("/api/quota", window.location.origin), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "reset",
+          code: resetCode,
+        }),
+      })
+        .then(async (response) => {
+          const payload = (await response.json()) as {
+            error?: string;
+            remaining?: number | null;
+          };
+
+          if (!response.ok) {
+            throw new Error(payload.error || "認証に失敗しました");
+          }
+
+          setRemainingGenerations(
+            typeof payload.remaining === "number" ? payload.remaining : GENERATION_LIMIT,
+          );
+          setResetMessage("回数をリセットしました");
+          setResetCode("");
         })
-          .then(async (response) => {
-            const payload = (await response.json()) as {
-              error?: string;
-              remaining?: number | null;
-            };
-
-            if (!response.ok) {
-              throw new Error(payload.error || "認証に失敗しました");
-            }
-
-            if (typeof payload.remaining === "number") {
-              setRemainingGenerations(payload.remaining);
-            } else {
-              setRemainingGenerations(GENERATION_LIMIT);
-            }
-
-            setResetMessage("回数をリセットしました");
-            setResetCode("");
-            setResetWord("");
-            setResetStep(1);
-          })
-          .catch((caughtError) => setResetMessage(getFriendlyErrorMessage(caughtError)));
-      } else {
-        updateRemainingGenerations(GENERATION_LIMIT);
-        setResetMessage("回数をリセットしました");
-        setResetCode("");
-        setResetWord("");
-        setResetStep(1);
-      }
-      return;
+        .catch((caughtError) => setResetMessage(getFriendlyErrorMessage(caughtError)));
+    } else {
+      updateRemainingGenerations(GENERATION_LIMIT);
+      setResetMessage("回数をリセットしました");
+      setResetCode("");
     }
-
-    setResetMessage("認証に失敗しました");
   }
 
   function openResetModal() {
     setIsResetOpen(true);
-    setResetStep(1);
     setResetCode("");
-    setResetWord("");
     setResetMessage("");
   }
 
@@ -697,14 +674,13 @@ export default function Home() {
               <div>
                 <h2 className="text-lg font-bold tracking-[0.08em] text-[#333333]">利用回数リセット</h2>
                 <p className="mt-1 text-sm leading-6 text-[#666666]">
-                  {resetStep === 1 ? "認証コードを入力してください。" : "認証ワードを入力してください。"}
+                  STAFFパスワードを入力してください。
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => {
                   setIsResetOpen(false);
-                  setResetStep(1);
                 }}
                 className="px-2 py-1 text-sm font-bold text-[#666666] hover:bg-[#f8f8f8]"
               >
@@ -713,28 +689,17 @@ export default function Home() {
             </div>
 
             <form onSubmit={handleResetSubmit} className="mt-5 grid gap-4">
-              {resetStep === 1 ? (
-                <label className="grid gap-2">
-                  <span className="text-sm font-bold tracking-[0.08em] text-[#333333]">認証コード</span>
-                  <input
-                    value={resetCode}
-                    onChange={(event) => setResetCode(event.target.value)}
-                    inputMode="numeric"
-                    autoFocus
-                    className="border border-[#cccccc] px-3 py-2 text-base outline-none hover:border-[#666666] focus:border-[#707070] focus:ring-4 focus:ring-[#88aeb7]/20"
-                  />
-                </label>
-              ) : (
-                <label className="grid gap-2">
-                  <span className="text-sm font-bold tracking-[0.08em] text-[#333333]">認証ワード</span>
-                  <input
-                    value={resetWord}
-                    onChange={(event) => setResetWord(event.target.value)}
-                    autoFocus
-                    className="border border-[#cccccc] px-3 py-2 text-base outline-none hover:border-[#666666] focus:border-[#707070] focus:ring-4 focus:ring-[#88aeb7]/20"
-                  />
-                </label>
-              )}
+              <label className="grid gap-2">
+                <span className="text-sm font-bold tracking-[0.08em] text-[#333333]">パスワード</span>
+                <input
+                  type="password"
+                  value={resetCode}
+                  onChange={(event) => setResetCode(event.target.value)}
+                  inputMode="numeric"
+                  autoFocus
+                  className="border border-[#cccccc] px-3 py-2 text-base outline-none hover:border-[#666666] focus:border-[#707070] focus:ring-4 focus:ring-[#88aeb7]/20"
+                />
+              </label>
 
               {resetMessage ? (
                 <div
@@ -752,7 +717,7 @@ export default function Home() {
                 type="submit"
                 className="inline-flex h-11 items-center justify-center bg-[#333333] px-4 text-sm font-bold tracking-[0.12em] text-white hover:opacity-70"
               >
-                {resetStep === 1 ? "次へ" : "リセット"}
+                リセット
               </button>
             </form>
           </div>
