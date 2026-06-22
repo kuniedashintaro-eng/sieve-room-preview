@@ -464,8 +464,8 @@ export default function Home() {
             </a>
           </div>
           <div className="pt-8">
-            <h1 className="text-[34px] font-bold leading-tight tracking-[0.08em] text-[#333333] sm:text-[46px]">
-              SIEVE Room Preview
+            <h1 className="text-[32px] font-normal leading-tight tracking-[0.16em] text-[#555555] sm:text-[44px]">
+              SIEVE ROOM PREVIEW
             </h1>
             <p className="mt-4 max-w-2xl text-sm font-medium leading-8 tracking-[0.08em] text-[#666666]">
               SIEVE公式サイト内のソファから商品を選び、部屋写真に自然に配置した購入検討用イメージを生成します。
