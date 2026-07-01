@@ -83,6 +83,27 @@ function extractSieveImageUrls(html: string, productId: string) {
     .map((path) => new URL(`/${path.replace(/^\/+/, "")}`, SIEVE_ORIGIN).toString());
 }
 
+function extractSieveColorImageUrls(html: string, productId: string) {
+  const productKey = productId.toLowerCase();
+  const imagePaths = [
+    ...new Set(
+      [...html.matchAll(/img\/goods\/[^"'<>\s)]+?\.(?:jpg|jpeg|png|webp)/gi)].map(
+        ([path]) => path,
+      ),
+    ),
+  ];
+
+  return imagePaths
+    .filter((path) => {
+      const lowerPath = path.toLowerCase();
+      return (
+        lowerPath.includes(productKey) &&
+        (lowerPath.includes("/9/") || lowerPath.includes("_sku."))
+      );
+    })
+    .map((path) => new URL(`/${path.replace(/^\/+/, "")}`, SIEVE_ORIGIN).toString());
+}
+
 async function scoreWhiteBackgroundImage(imageUrl: string) {
   const response = await fetch(imageUrl, {
     cache: "force-cache",
@@ -152,19 +173,18 @@ async function getBestProductReferenceImageUrl(product: NonNullable<ReturnType<t
 
     const html = await response.text();
     const candidates = extractSieveImageUrls(html, product.id);
-    let bestCandidate = "";
-    let bestScore = 0;
+    const whiteBackgroundCandidates = candidates.slice(1);
+    const colorImageCandidates = extractSieveColorImageUrls(html, product.id);
 
-    for (const [index, candidate] of candidates.entries()) {
+    for (const candidate of whiteBackgroundCandidates) {
       const score = await scoreWhiteBackgroundImage(candidate).catch(() => null);
 
-      if (score !== null && score - index * 0.001 > bestScore) {
-        bestCandidate = candidate;
-        bestScore = score - index * 0.001;
+      if (score !== null) {
+        return candidate;
       }
     }
 
-    return bestCandidate || product.imageUrl;
+    return colorImageCandidates[0] ?? product.imageUrl;
   } catch (error) {
     console.warn("Falling back to default product image:", error);
     return product.imageUrl;
