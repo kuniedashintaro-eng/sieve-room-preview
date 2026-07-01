@@ -564,7 +564,7 @@ export default function Home() {
               <textarea
                 value={placementInstruction}
                 onChange={(event) => setPlacementInstruction(event.target.value)}
-                placeholder="例: 窓の右側、ラグの上に壁と平行に配置"
+                placeholder="例: 右側の窓下の壁に背もたれをぴったり沿わせて、壁と平行に配置してください。斜めに置かないでください。"
                 rows={5}
                 className="resize-none border border-[#cccccc] px-4 py-4 text-base text-[#333333] outline-none transition placeholder:text-[#999999] hover:border-[#666666] focus:border-[#707070] focus:ring-4 focus:ring-[#88aeb7]/20"
               />
