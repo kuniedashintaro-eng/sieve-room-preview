@@ -112,3 +112,13 @@ export async function resetRemainingGenerations() {
   await redisCommand(`/set/${encodeURIComponent(QUOTA_KEY)}/${GENERATION_LIMIT}`);
   return GENERATION_LIMIT;
 }
+
+export async function setRemainingGenerations(nextValue: number) {
+  if (!getRedisConfig()) {
+    return null;
+  }
+
+  const safeValue = normalizeRemaining(nextValue);
+  await redisCommand(`/set/${encodeURIComponent(QUOTA_KEY)}/${safeValue}`);
+  return safeValue;
+}

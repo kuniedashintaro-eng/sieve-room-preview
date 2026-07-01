@@ -4,6 +4,7 @@ import {
   getQuotaMode,
   getRemainingGenerations,
   resetRemainingGenerations,
+  setRemainingGenerations,
 } from "@/lib/quotaStore";
 
 function errorResponse(message: string, status = 400) {
@@ -31,15 +32,15 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  let body: { action?: string; code?: string };
+  let body: { action?: string; code?: string; remaining?: number };
 
   try {
-    body = (await request.json()) as { action?: string; code?: string };
+    body = (await request.json()) as { action?: string; code?: string; remaining?: number };
   } catch {
     return errorResponse("リセット情報を読み取れませんでした。");
   }
 
-  if (body.action !== "reset") {
+  if (body.action !== "reset" && body.action !== "set") {
     return errorResponse("未対応の操作です。");
   }
 
@@ -49,7 +50,10 @@ export async function POST(request: Request) {
 
   try {
     const mode = getQuotaMode();
-    const remaining = await resetRemainingGenerations();
+    const remaining =
+      body.action === "set"
+        ? await setRemainingGenerations(Number(body.remaining))
+        : await resetRemainingGenerations();
 
     return NextResponse.json({
       limit: GENERATION_LIMIT,
