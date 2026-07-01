@@ -10,6 +10,7 @@ export const maxDuration = 300;
 const MAX_IMAGE_SIZE_BYTES = 50 * 1024 * 1024;
 const SUPPORTED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const IMAGE_MODEL = "gpt-image-2";
+const SIEVE_ORIGIN = "https://www.sieve.jp";
 
 function readTextField(formData: FormData, name: string) {
   const value = formData.get(name);
@@ -58,6 +59,116 @@ async function normalizeImageForOpenAI(buffer: Buffer) {
     })
     .png()
     .toBuffer();
+}
+
+function extractSieveImageUrls(html: string, productId: string) {
+  const productKey = productId.toLowerCase();
+  const imagePaths = [
+    ...new Set(
+      [...html.matchAll(/img\/goods\/[^"'<>\s)]+?\.(?:jpg|jpeg|png|webp)/gi)].map(
+        ([path]) => path,
+      ),
+    ),
+  ];
+
+  return imagePaths
+    .filter((path) => {
+      const lowerPath = path.toLowerCase();
+      return (
+        lowerPath.includes(productKey) &&
+        !lowerPath.includes("/9/") &&
+        !lowerPath.includes("_sku.")
+      );
+    })
+    .map((path) => new URL(`/${path.replace(/^\/+/, "")}`, SIEVE_ORIGIN).toString());
+}
+
+async function scoreWhiteBackgroundImage(imageUrl: string) {
+  const response = await fetch(imageUrl, {
+    cache: "force-cache",
+    signal: AbortSignal.timeout(8000),
+  });
+
+  if (!response.ok) {
+    return null;
+  }
+
+  const buffer = Buffer.from(await response.arrayBuffer());
+  const metadata = await sharp(buffer, { failOn: "none" }).metadata();
+
+  if (!metadata.width || !metadata.height || metadata.width < 500 || metadata.height < 500) {
+    return null;
+  }
+
+  const { data } = await sharp(buffer, { failOn: "none" })
+    .rotate()
+    .flatten({ background: "#ffffff" })
+    .resize(64, 64, { fit: "inside", withoutEnlargement: true })
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+
+  let whitePixels = 0;
+  let nonWhitePixels = 0;
+
+  for (let index = 0; index < data.length; index += 3) {
+    const red = data[index];
+    const green = data[index + 1];
+    const blue = data[index + 2];
+
+    if (red > 240 && green > 240 && blue > 240) {
+      whitePixels += 1;
+    }
+
+    if (red < 245 || green < 245 || blue < 245) {
+      nonWhitePixels += 1;
+    }
+  }
+
+  const totalPixels = data.length / 3;
+  const whiteRatio = whitePixels / totalPixels;
+  const nonWhiteRatio = nonWhitePixels / totalPixels;
+
+  if (whiteRatio < 0.5 || whiteRatio > 0.95 || nonWhiteRatio < 0.04) {
+    return null;
+  }
+
+  return whiteRatio;
+}
+
+async function getBestProductReferenceImageUrl(product: NonNullable<ReturnType<typeof findSieveProduct>>) {
+  if (product.referenceImageUrl) {
+    return product.referenceImageUrl;
+  }
+
+  try {
+    const response = await fetch(product.productUrl, {
+      cache: "force-cache",
+      signal: AbortSignal.timeout(8000),
+    });
+
+    if (!response.ok) {
+      return product.imageUrl;
+    }
+
+    const html = await response.text();
+    const candidates = extractSieveImageUrls(html, product.id);
+    let bestCandidate = "";
+    let bestScore = 0;
+
+    for (const [index, candidate] of candidates.entries()) {
+      const score = await scoreWhiteBackgroundImage(candidate).catch(() => null);
+
+      if (score !== null && score - index * 0.001 > bestScore) {
+        bestCandidate = candidate;
+        bestScore = score - index * 0.001;
+      }
+    }
+
+    return bestCandidate || product.imageUrl;
+  } catch (error) {
+    console.warn("Falling back to default product image:", error);
+    return product.imageUrl;
+  }
 }
 
 export async function POST(request: Request) {
@@ -119,7 +230,7 @@ export async function POST(request: Request) {
     const imageFile = await toFile(imageBuffer, "room-image.png", {
       type: "image/png",
     });
-    const productReferenceImageUrl = selectedProduct.referenceImageUrl ?? selectedProduct.imageUrl;
+    const productReferenceImageUrl = await getBestProductReferenceImageUrl(selectedProduct);
     const productImageResponse = await fetch(productReferenceImageUrl);
 
     if (!productImageResponse.ok) {
