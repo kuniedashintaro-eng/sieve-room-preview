@@ -590,9 +590,14 @@ export default function Home() {
             </button>
 
             {isLoading ? (
-              <div className="flex items-center gap-3 text-sm leading-6 text-[#666666]">
+              <div className="flex items-start gap-3 text-sm leading-6 text-[#666666]">
                 <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-[#88aeb7]" />
-                SIEVE商品の形状と部屋の光、遠近感、影を合わせて配置しています。
+                <div>
+                  <p>SIEVE商品の形状と部屋の光、遠近感、影を合わせて配置しています。</p>
+                  <p className="mt-1 text-xs tracking-[0.04em] text-[#888888]">
+                    生成には1分ほどかかる場合があります。このままお待ちください。
+                  </p>
+                </div>
               </div>
             ) : null}
           </form>
@@ -652,7 +657,7 @@ export default function Home() {
 
         <div className="grid gap-3 border-t border-[#eeeeee] pb-8 pt-8 text-center">
           <p className="mx-auto max-w-2xl px-4 text-[11px] leading-6 tracking-[0.08em] text-[#9a9a9a]">
-            生成画像は購入検討用のイメージです。実際の商品サイズ、設置可否、色味、形状、納まりを保証するものではありません。
+            生成画像は購入検討用のイメージです。再現度は70〜80%程度を目安としてご確認ください。実際の商品サイズ、設置可否、色味、形状、納まりを保証するものではありません。
           </p>
           <div className="flex items-center justify-center gap-3 text-[10px] font-medium tracking-[0.08em] text-[#d0d0d0]">
             <span>{isFull ? "full" : `${remainingGenerations} / ${GENERATION_LIMIT}`}</span>
